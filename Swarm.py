@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.animation as animation
 from InertiaFunction import InertiaFuc
-
+import inspect
 class Swarm:
     """
     Esta clase crea un swarm de n partículas. El rango de posibles valores
@@ -88,6 +88,18 @@ class Swarm:
 
     optimization_iterations : `int`
         número de iteraciones de optimizacion.
+
+    diversity_position : `list`
+        Diversidad de posición de las particulas
+
+    mean_velocity :  `None`
+        Media de la velocidad de las particulas
+
+    diversity_velocity : `list`
+        Diversidad de velocidad de las particulas
+
+    diversity_cognitive : `list`
+        Diversidad cognitiva de las particulas
 
     verbose : `bool`, optional
         mostrar información de la partícula creada. (default is ``False``)
@@ -228,8 +240,15 @@ class Swarm:
                 + "\n" \
                 + "Posición óptima: " + str(self.optimal_position) \
                 + "\n" \
-                + "Valor óptimo: " + str(self.optimal_value)
-                
+                + "Valor óptimo: " + str(self.optimal_value) \
+                + "\n" \
+                + "----------------------------" \
+                + "\n" \
+                + "Diversidad del enjambre:" \
+                + "\n" \
+                + "Diversidad de posición: " + str(self.diversity_position[-1]) \
+                + "Diversidad de velocidad: " + str(self.diversity_velocity[-1]) \
+                + "Diversidad cognitiva: " + str(self.diversity_cognitive[-1]) 
         return(text)
 
     def show_particles(self, n=None):
@@ -349,6 +368,10 @@ class Swarm:
             print("Mejor posición encontrada : "
                   + np.array2string(self.best_position))
             print("Mejor valor encontrado : " + str(self.best_value))
+            if len(self.best_value_history) > 0:
+                print("Diversidad de posción: "+str(self.diversity_position[-1]))
+                print("Diversidad de velocidad: "+str(self.diversity_velocity[-1]))
+                print("Diversidad cognitiva: "+str(self.diversity_cognitive[-1]))
             print("")
 
     def move_swarm(self, inertia, cognitive_weight_C1, social_weight_C2,
@@ -359,9 +382,6 @@ class Swarm:
 
         Parameters
         ----------
-        optimization : {maximizar o minimizar}
-            si se desea maximizar o minimizar la función.
-
         inertia : `float` or `int`
             coeficiente de inercia.
 
@@ -374,6 +394,11 @@ class Swarm:
         verbose : `bool`, optional
             mostrar información de la partícula creada. (default is ``False``)
         
+        adaptive_inertia: `bool`, optional
+            si se elige una de las funciones adaptativas, es necesario activar este
+            parametro. Ademas no es posible usar funciones No adaptativas
+            con este parametro activado (default is ``False``)
+        
         """
 
         # Se actualiza la posición de cada una de las partículas que forman el
@@ -385,12 +410,12 @@ class Swarm:
             position, velocity, pbest = self.particles[i].move_particle(
                 best_swarm_position=self.best_position,
                 inertia=inertia,
-                adaptative_inertia = False, 
-                adptativeParameters = None,
+                adaptative_inertia = adaptative_inertia, 
+                adptativeParameters = adptativeParameters,
                 cognitive_weight_C1=cognitive_weight_C1,
                 social_weight_C2=social_weight_C2,
-                diversity_weight_C3 = None, 
-                diversity_control = None, 
+                diversity_weight_C3 = diversity_weight_C3, 
+                diversity_control = diversity_control, 
                 AverageCurrentVelocity = self.mean_velocity,
                 verbose=verbose
             )
@@ -426,6 +451,7 @@ class Swarm:
         self.diversity_position.append(temp_swarm_population_PositionDiversity)
         self.diversity_velocity.append(temp_swarm_population_VelocityDiversity)
         self.diversity_cognitive.append(temp_swarm_population_CognitiveDiversity)
+
         # ----------------------------------------------------------------------
         if verbose:
             print("---------------------------------------------------------" \
@@ -440,7 +466,7 @@ class Swarm:
                   inertia=0.729844, reduce_inertia=False, inertia_function = None, adaptative_inertia = False,
                  cognitive_weight_C1=2, social_weight_C2=2, diversity_weight_C3 = None, diversity_control = None,
                   early_stopping=False, stopping_rounds=None,
-                  stopping_tolerance=None, verbose=False):
+                  stopping_tolerance=None, verbose=False, save_optmize = False):
         """
         Este método realiza el proceso de optimización de un swarm.
 
@@ -457,6 +483,20 @@ class Swarm:
 
         inertia : `float` or `int`, optional
             coeficiente de inercia. (default is ``0.729844``)
+        
+        reduce_inertia: `bool`, optional
+           activar la reducción del coeficiente de inercia. En tal caso, el
+           argumento `inertia` es ignorado. (default is ``True``)
+
+        inertia_function: `function`
+            función para el calculo de la inercia, pueder ser alguna implementado 
+            en la clase InertiaFuction o puede ser una propia, ver la
+            documentación para mas información.
+
+        adaptive_inertia: `bool`, optional
+            si se elige una de las funciones adaptativas, es necesario activar este
+            parametro. Ademas no es posible usar funciones No adaptativas
+            con este parametro activado (default is ``False``)
 
         cognitive_weight_C1 : `float` or `int`, optional
             coeficiente cognitivo. (default is ``2``)
@@ -464,17 +504,13 @@ class Swarm:
         social_weight_C2 : `float` or `int`, optional
             coeficiente social. (default is ``2``)
 
-        reduce_inertia: `bool`, optional
-           activar la reducción del coeficiente de inercia. En tal caso, el
-           argumento `inertia` es ignorado. (default is ``True``)
+        diversity_weight_C3 : `float` or int, optional
+            coeficiente de control de diversidad (default is ``None``)
 
-        inertia_function: `function`
-            función para el calculo de la inercia
-
-        adaptive_inertia: `bool`, optional
-            si se elige una de las funciones adaptativas, es necesario activar este
-            parametro. (default is ``False``)
-
+        diversity_control : {RandomNoise, AverageOfVelocities, PositionAndAverageOfVelocities}
+            metodo para el control de la diversidad, ver la documentación 
+            para mas información (default is ``None``)
+        
         early_stopping : `bool`, optional
             si durante las últimas `stopping_rounds` generaciones la diferencia
             absoluta entre mejores individuos no es superior al valor de 
@@ -489,8 +525,12 @@ class Swarm:
             valor mínimo que debe tener la diferencia de generaciones consecutivas
             para considerar que hay cambio. (default is ``None``)
 
-         verbose : `bool`, optional
+        verbose : `bool`, optional
             mostrar información de la partícula creada. (default is ``False``)
+
+        save_optmize : `bool`, optional
+            guardara los valores de diversidad, mejor poscion y valor del enjambre asi
+            como la diferencia absoulate en un archivo pickle llamado "Optimizacion %Y-%m-%d %H:%M:%S"
         
         Raises
         ------
@@ -520,23 +560,26 @@ class Swarm:
                         )
 
         >>> swarm.optimize(
-                objective_function = objective_function,
+                objective_function = funcion_objetivo,
                 optimization     = "minimizar",
-                n_iterations    = 250,
+                n_iterations    = 40,
                 inertia          = 0.729844,
                 reduce_inertia    = True,
-                inertia_function =  InertiaFuc.AdptiveIW,
+                inertia_function =  InertiaFuc.Personalization(InertiaFuc.ImprovedIW, alpha = 0.2, beta =0.7),
                 adaptative_inertia = True,
                 cognitive_weight_C1   = 1,
                 social_weight_C2      = 2,
+                diversity_weight_C3   = 2,
+                diversity_control   = "PositionAndAverageOfVelocities",
                 early_stopping  = True,
                 stopping_rounds    = 10,
-                stopping_tolerance = 10**-3,
+                stopping_tolerance = 10**-2,
                 verbose          = False
             )
 
         """
-
+        # Variable auxiliar
+        EarlyStop = False
         # COMPROBACIONES INICIALES: EXCEPTIONS Y WARNINGS
         # ----------------------------------------------------------------------
         # Si se activa el early stopping, hay que especificar los argumentos
@@ -547,14 +590,29 @@ class Swarm:
                 "Para activar el early stopping es necesario indicar un " \
                 + " valor de stopping_rounds y de stopping_tolerance."
                 )
-        # Si se activa la adaptative_inertia, hay que especificar que la 
-        # función decidida no sea parte de las funciones No Adaptativas y viceversa
-        if adaptative_inertia \
-        and (inertia_function == InertiaFuc.SelfRegulatingIWA):
+        # Si se activa la reduccion de inercia, hay que especificar que funcion y si es adaptativa.
+        # reduce_inertia, inertia_function y adaptative_inertia
+        if reduce_inertia and inertia_function == None and adaptative_inertia == False:
+            # No se desea reducir la inercia
             raise Exception(
-                "Para activar el adaptative inertia es necesario usar las funciones" \
-                + " que terminen en IWA o usen la plantilla para las estrategias adaptativas."
+                "El parametro reduce_inertia debe ser False si no se" \
+                + "desea reducir la inercia o agrege una funcion de inercia."
                 )
+        elif reduce_inertia and inertia_function != None and adaptative_inertia == False:
+            # Se desea reducir la inercia con una función adaptativa sin el parametro adaptative_inertia
+            if inertia_function.__name__.endswith('IWA') and inertia_function.__name__ != 'Personalization':
+                raise Exception(
+                "Para usar las funciones adaptativas que terminen en" \
+                + " IWA activa el parametro adaptative_inertia en True."
+                )
+        elif reduce_inertia and inertia_function != None and adaptative_inertia: 
+            # Se desea reducir la inercia con una función no adaptativa con parametro adaptative_inertia
+            if inertia_function.__name__.endswith('IW') and inertia_function.__name__ != 'Personalization':
+                raise Exception(
+                "Para usar las funciones No adaptativas que terminen en" \
+                + " IW desactiva el parametro adaptative_inertia en False."
+                )
+        
         # ITERACIONES
         # ----------------------------------------------------------------------
         start = time.time()
@@ -599,6 +657,7 @@ class Swarm:
             if early_stopping and i > stopping_rounds:
                 ultimos_n = np.array(self.absolute_difference[-(stopping_rounds): ])
                 if all(ultimos_n < stopping_tolerance):
+                    EarlyStop =True
                     print("Algoritmo detenido en la iteracion " 
                           + str(i) \
                           + " por falta cambio absoluto mínimo de " \
@@ -615,9 +674,10 @@ class Swarm:
                         # SE ACTUALIZA EL COEFICIENTE DE INERCIA
             # ------------------------------------------------------------------
             if reduce_inertia and not adaptative_inertia:
-                inertia = inertia_function(inertia, n_iterations, i)
-            elif reduce_inertia and adaptative_inertia:
-                adptativeParameters = [inertia_function, n_iterations, i, self.n_particles, self.best_particle]
+                    inertia = inertia_function(inertia, n_iterations, i)
+            elif not reduce_inertia:
+                adptativeParameters = True
+            adptativeParameters = [inertia_function, n_iterations, self.best_particle, i]
             Swarm.move_swarm(
                self,
                inertia        = inertia,
@@ -643,18 +703,35 @@ class Swarm:
         
         # CREACIÓN DE UN DATAFRAME CON LOS RESULTADOS
         # ----------------------------------------------------------------------
-        self.resultados_df = pd.DataFrame(
-            {
-            "mejor_valor_enjambre"   : self.best_value_history,
-            "mejor_posicion_enjambre": self.best_position_history,
-            "diferencia_abs"         : self.absolute_difference
-            }
-        )
+        if EarlyStop:
+            self.resultados_df = pd.DataFrame(
+                {
+                "mejor_valor_enjambre"   : self.best_value_history[:-1],
+                "mejor_posicion_enjambre": self.best_position_history[:-1],
+                "diferencia_abs"         : self.absolute_difference[:-1],
+                "diversidad_posicion"    : self.diversity_position,
+                "diversidad_velocidad"   : self.diversity_velocity,
+                "diversidad_cognitiva"   : self.diversity_cognitive
+                }
+            )
+        else:
+            self.resultados_df = pd.DataFrame(
+                {
+                "mejor_valor_enjambre"   : self.best_value_history,
+                "mejor_posicion_enjambre": self.best_position_history,
+                "diferencia_abs"         : self.absolute_difference,
+                "diversidad_posicion"    : self.diversity_position,
+                "diversidad_velocidad"   : self.diversity_velocity,
+                "diversidad_cognitiva"   : self.diversity_cognitive
+                }
+            )
         self.resultados_df["iteracion"] = self.resultados_df.index
-        
+        fecha_hora = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        if save_optmize:
+            nombre_archivo = 'Optimizacion_' + fecha_hora + '.pkl'
+            self.resultados_df.to_pickle(nombre_archivo)
         print("-------------------------------------------")
-        print("Optimización finalizada " \
-              + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        print("Optimización finalizada " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         print("-------------------------------------------")
         print("Duración optimización: " + str(end - start))
         print("Número de iteraciones: " + str(self.optimization_iterations))

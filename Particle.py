@@ -174,7 +174,7 @@ class Particle:
                                     self.lower_limits[i],
                                     self.upper_limits[i]
                                 )
-
+        self.last_position = self.position
         # LA VELOCIDAD INICIAL DE LA PARTÍCULA ES 0
         # ----------------------------------------------------------------------
         self.velocity = np.repeat(0, self.num_variables)
@@ -307,7 +307,8 @@ class Particle:
 
     def move_particle(self, best_swarm_position, inertia=0.729844, adaptative_inertia = False, 
                       adptativeParameters = None, cognitive_weight_C1=2, social_weight_C2=2, 
-                      diversity_weight_C3 = None, diversity_control = None, AverageCurrentVelocity=None,  verbose=False):
+                      diversity_weight_C3 = None, diversity_control = None, AverageCurrentVelocity=None,  
+                      verbose=False):
         """
         Este método ejecuta el movimiento de una partícula, lo que implica
         actualizar su velocidad y posición. No se permite que la partícula
@@ -372,8 +373,12 @@ class Particle:
 
         # ACTUALIZACIÓN DE LA VELOCIDAD
         # ----------------------------------------------------------------------
-        if adaptative_inertia:
-            inertia = adptativeParameters[0](self.inertiaParticle,adptativeParameters[1],adptativeParameters[2],adptativeParameters[3],adptativeParameters[4], self.value, self.last_position)
+        if adptativeParameters:
+            velocity_component = inertia * self.velocity
+        elif adaptative_inertia:
+            inertia = adptativeParameters[0](self, n_iterations = adptativeParameters[1],
+                                             best_particle = adptativeParameters[2],
+                                             i = adptativeParameters[3])
             self.inertiaParticle = inertia
         velocity_component = inertia * self.velocity
         r1 = np.random.uniform(low=0.0, high=1.0, size = len(self.velocity))
@@ -388,7 +393,7 @@ class Particle:
         
         # ACTUALIZACIÓN DE LA POSICIÓN
         # ----------------------------------------------------------------------
-        if diversity_control == None or AverageCurrentVelocity == None:
+        if diversity_control == None or adptativeParameters[3] == 0:
             self.position = self.position + self.velocity
         elif diversity_control == "RandomNoise":
             self.position = self.position + self.velocity + diversity_weight_C3 * np.random.uniform(low=0.0, high=1.0, size = len(self.velocity))
@@ -411,7 +416,7 @@ class Particle:
             if self.position[i] > self.upper_limits[i]:
                 self.position[i] = self.upper_limits[i]
                 self.velocity[i] = 0
-                
+        self.last_position = self.position   
         # INFORMACIÓN DEL PROCESO (VERBOSE)
         # ----------------------------------------------------------------------
         if verbose:

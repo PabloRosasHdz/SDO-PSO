@@ -79,13 +79,13 @@ def ejemploInercia():
     # Ejemplo optimización con una función de inercia propia
         #    Ejemplo PARA NUESTRA PROPIA FUNCION INERCIAL NO ADAPTATIVA
         #    Los argumnentos siguientes sonestrictamente necesarios.
-            #    def NOMBRE(inertia, n_iterations, i):
+            #    def nombreIW(inertia, n_iterations, i):
             #        inertia = FUCTION
             #        return inertia
         #   Ejemplo PARA NUESTRA PROPIA FUNCION INERCIAL ADAPTATIVA
-            #   def ADAPTIVE(inertiaParticle, n_iterations, best_particle, particle, i, totalparticles):
-            #       inertia = INERTIA FUCNTION
-            #       return inertia
+            #def adaptiveIWA(particle, n_iterations, best_particle, i):
+            #    inertia = INERTIA FUCNTION
+            #    return inertia
 
     enjambre = Swarm(
                n_particles = 50,
@@ -95,36 +95,44 @@ def ejemploInercia():
                verbose      = False
             )
     #InertiaFuc.Personalization(InertiaFuc.NoLinearIW, Weightmin = 0.1, Weightmax = 0.7, alpha =2)
+    #InertiaFuc.Personalization(InertiaFuc.DoubleExponentialSelfAdaptiveIWA, initialweight = 0.7)
     enjambre.optimize(
         objective_function = funcion_objetivo,
         optimization     = "minimizar",
-        n_iterations    = 4,
+        n_iterations    = 100,
         inertia          = 0.729844,
         reduce_inertia    = True,
-        inertia_function =  InertiaFuc.Personalization(InertiaFuc.SelfRegulatingIWA, eta = 2, Weightinitial = 1.2, Weightfinal = 0.4),
+        inertia_function =  InertiaFuc.ImprovedIWA,
         adaptative_inertia = True,
         cognitive_weight_C1   = 1,
         social_weight_C2      = 2,
-        diversity_weight_C3   = 2,
+        diversity_weight_C3   = 0.2,
         diversity_control   = "PositionAndAverageOfVelocities",
-        early_stopping  = True,
         stopping_rounds    = 10,
-        stopping_tolerance = 10**-2,
-        verbose          = False
+        stopping_tolerance = 10**-3,
+        save_optmize = True
     )
     # print(enjambre)
 
-    # Evolución de la optimización
-    fig = plt.figure(figsize=(6,4))
-    enjambre.resultados_df['mejor_valor_enjambre'].plot()
+    # Evolución de la optimización y diversidad
+    fig, axs = plt.subplots(2, 1, figsize=(10, 8))
+    enjambre.resultados_df['mejor_valor_enjambre'].plot(ax=axs[0], label='mejor_valor_enjambre', color='green')
+    enjambre.resultados_df['diversidad_posicion'].plot(ax=axs[1], label='diversidad_posicion', color='blue')
+    enjambre.resultados_df['diversidad_velocidad'].plot(ax=axs[1], label='diversidad_velocidad', color='red')
+    enjambre.resultados_df['diversidad_cognitiva'].plot(ax=axs[1], label='diversidad_cognitiva', color='magenta')
+    axs[0].legend()
+    axs[1].legend()
+
+    # Mostrar los gráficos
+    plt.tight_layout()
     plt.show()
     # Contour plot función objetivo
-    #x_0 = np.linspace(start = -5, stop = 5, num = 100)
-    #x_1 = np.linspace(start = -5, stop = 5, num = 100)
-    #x_0, x_1 = np.meshgrid(x_0, x_1)
-    #z = funcion_objetivo(x_0, x_1)
-    # plt.contour(x_0, x_1, z, 35, cmap='RdGy')
-    #enjambre.animatePSO(x_0, x_1, z)
+    x_0 = np.linspace(start = -5, stop = 5, num = 100)
+    x_1 = np.linspace(start = -5, stop = 5, num = 100)
+    x_0, x_1 = np.meshgrid(x_0, x_1)
+    z = funcion_objetivo(x_0, x_1)
+    plt.contour(x_0, x_1, z, 35, cmap='RdGy')
+    enjambre.animatePSO(x_0, x_1, z)
 
 if __name__ == "__main__":
     ejemploInercia()
