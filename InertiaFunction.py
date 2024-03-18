@@ -1,6 +1,6 @@
 import math
 import random
-import inspect
+import numpy as np
 
 class InertiaFuc:
     """
@@ -203,6 +203,14 @@ class InertiaFuc:
             is_better = any(a < b for a, b in zip(solution_a, solution_b))
         return is_equal_or_better and is_better
     
+    def has_multiple_elements(arr):
+        if isinstance(arr, np.ndarray):
+            return arr.size > 1
+        elif isinstance(arr, (list, tuple)):
+            return len(arr) > 1
+        else:
+            return False
+        
     # ESTRATEGIAS ADAPTATIVAS PARA EL CONTROL DEL PESO INERCIAL
     def SelfRegulatingIWA(particle, n_iterations, best_particle, i, eta = 1, Weightinitial = 0.9, Weightfinal = 0.4, *args, **kwargs):
         """

@@ -96,9 +96,9 @@ def ejemploInercia():
 
     enjambre = Swarm(
                n_particles = 50,
-               num_variables  = 30,
-               lower_limits  = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-               upper_limits  = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+               num_variables  = 4,
+               lower_limits  = [0,0,0,0],
+               upper_limits  = [1,1,1,1],
                verbose      = False
             )
     #InertiaFuc.Personalization(InertiaFuc.NoLinearIW, Weightmin = 0.1, Weightmax = 0.7, alpha =2)
