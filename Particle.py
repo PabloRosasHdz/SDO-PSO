@@ -275,7 +275,6 @@ class Particle:
         # EVALUACIÓN DE LA FUNCIÓN OBJETIVO EN LA POSICIÓN ACTUAL
         # ----------------------------------------------------------------------
         self.value = objective_function(*self.position)
-
         # MEJOR VALOR Y POSICIÓN
         # ----------------------------------------------------------------------
         # Se compara el valor actual con el mejor valor histórico. La comparación
@@ -287,13 +286,22 @@ class Particle:
         if self.best_value is None:
             self.best_value    = np.copy(self.value)
             self.best_position = np.copy(self.position)
-        else:
+        elif(len(self.value) == 1):
             if optimization == "minimizar":
                 if self.value < self.best_value:
                     self.best_value    = np.copy(self.value)
                     self.best_position = np.copy(self.position)
             else:
                 if self.value > self.best_value:
+                    self.best_value    = np.copy(self.value)
+                    self.best_position = np.copy(self.position)
+        else:
+            if optimization == "minimizar":
+                if InertiaFuc.pareto_dominance(self.best_value, self.best_position, maximize=False):
+                    self.best_value    = np.copy(self.value)
+                    self.best_position = np.copy(self.position)
+            else:
+                if InertiaFuc.pareto_dominance(self.best_value, self.best_position, maximize=True):
                     self.best_value    = np.copy(self.value)
                     self.best_position = np.copy(self.position)
 

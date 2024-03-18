@@ -645,9 +645,8 @@ class Swarm:
             if i == 0:
                 self.absolute_difference.append(None)
             else:
-                diference = abs(self.best_value_history[i] \
-                                 - self.best_value_history[i-1])
-                self.absolute_difference.append(diference)
+                differences = [abs(a - b) for a, b in zip(self.best_value_history[i], self.best_value_history[i-1])]
+                self.absolute_difference.append(differences)
 
             # DETECCIÓN EARLY STOPPING
             # ------------------------------------------------------------------

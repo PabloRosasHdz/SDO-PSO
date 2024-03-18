@@ -183,6 +183,26 @@ class InertiaFuc:
             squared_diff = sum((coord1 - coord2) ** 2 for coord1, coord2 in zip(point1, point2))
             return math.sqrt(squared_diff)
 
+    def pareto_dominance(solution_a, solution_b, maximize=True):
+        """
+        Verifica si solution_a domina a solution_b en un espacio de objetivos múltiples.
+
+        Args:
+        solution_a (list): Los valores de los objetivos para la solución A.
+        solution_b (list): Los valores de los objetivos para la solución B.
+        maximize (bool): Indica si se desea maximizar (True) o minimizar (False) los objetivos.
+
+        Returns:
+        bool: True si solution_a domina a solution_b, False en caso contrario.
+        """
+        if maximize:
+            is_equal_or_better = all(a >= b for a, b in zip(solution_a, solution_b))
+            is_better = any(a > b for a, b in zip(solution_a, solution_b))
+        else:
+            is_equal_or_better = all(a <= b for a, b in zip(solution_a, solution_b))
+            is_better = any(a < b for a, b in zip(solution_a, solution_b))
+        return is_equal_or_better and is_better
+    
     # ESTRATEGIAS ADAPTATIVAS PARA EL CONTROL DEL PESO INERCIAL
     def SelfRegulatingIWA(particle, n_iterations, best_particle, i, eta = 1, Weightinitial = 0.9, Weightfinal = 0.4, *args, **kwargs):
         """
